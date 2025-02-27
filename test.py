@@ -1,10 +1,12 @@
 import subprocess
+import os
+from typing import override
 import unittest
 
 
 def run_script(cmds: list[str]):
     p = subprocess.Popen(
-        "./main",
+        ["./main", "test.db"],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -15,6 +17,10 @@ def run_script(cmds: list[str]):
 
 
 class TestDatabase(unittest.TestCase):
+    @override
+    def setUp(self):
+        os.remove("./test.db")
+
     def compare(self, results: list[str], expected: list[str]):
         for i, result in enumerate(results):
             self.assertEqual(result, expected[i])
@@ -53,6 +59,14 @@ class TestDatabase(unittest.TestCase):
     def test_negative_id(self):
         results = run_script(["insert -1 cstack foo@bar.com", "select", ".exit"])
         self.compare(results, ["db > ID must be positive.", "db > Executed.", "db >"])
+
+    def test_persistance(self):
+        results = run_script(["insert 1 user1 person@example.com", ".exit"])
+        self.compare(results, ["db > Executed.", "db >"])
+        results = run_script(["select", ".exit"])
+        self.compare(
+            results, ["db > (1, user1, person@example.com)", "Executed.", "db >"]
+        )
 
 
 if __name__ == "__main__":
