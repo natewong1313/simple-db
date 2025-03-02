@@ -68,6 +68,43 @@ class TestDatabase(unittest.TestCase):
             results, ["db > (1, user1, person@example.com)", "Executed.", "db >"]
         )
 
+    def test_constants(self):
+        results = run_script([".constants", ".exit"])
+        self.compare(
+            results,
+            [
+                "db > Constants:",
+                "ROW_SIZE: 293",
+                "COMMON_NODE_HEADER_SIZE: 6",
+                "LEAF_NODE_HEADER_SIZE: 10",
+                "LEAF_NODE_CELL_SIZE: 297",
+                "LEAF_NODE_SPACE_FOR_CELLS: 4086",
+                "LEAF_NODE_MAX_CELLS: 13",
+                "db >",
+            ],
+        )
+
+    def test_btree(self):
+        inserts = [f"insert {i} user{i} person{i}@example.com" for i in range(1, 4)]
+        inserts.reverse()
+        inserts.append(".btree")
+        inserts.append(".exit")
+        results = run_script(inserts)
+        self.compare(
+            results,
+            [
+                "db > Executed.",
+                "db > Executed.",
+                "db > Executed.",
+                "db > Tree:",
+                "leaf(size 3)",
+                " - 0 : 1",
+                " - 1 : 2",
+                " - 2 : 3",
+                "db >",
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
